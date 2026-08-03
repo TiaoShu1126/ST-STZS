@@ -130,6 +130,29 @@ const NovelAIConnector = {
                 ? `${c.promptPrefix.trim()}, ${prompt}`.replace(/,\s*,/g, ',').trim()
                 : prompt;
 
+            // 多角色分层解析 (V4/V4.5 Multi-Character Prompting)
+            let baseCaption = finalPrompt;
+            const charCaptions = [];
+            
+            if (p.v4MultiChar !== false) {
+                const charRegex = /<char>(.*?)<\/char>/gi;
+                let match;
+                
+                while ((match = charRegex.exec(finalPrompt)) !== null) {
+                    if (match[1] && match[1].trim()) {
+                        charCaptions.push({
+                            char_caption: match[1].trim(),
+                            centers: [{ x: 0.5, y: 0.5 }]
+                        });
+                    }
+                }
+                
+                // 从基础提示词中移除 <char> 标签及其内容
+                baseCaption = baseCaption.replace(/<char>.*?<\/char>/gi, '').replace(/,\s*,/g, ',').trim();
+                // 去除可能遗留的开头或结尾的逗号
+                baseCaption = baseCaption.replace(/^,|,$/g, '').trim();
+            }
+
             const finalNegative = negative || c.undesiredContent || '';
 
             const width = params.width || p.width || 832;
@@ -154,7 +177,7 @@ const NovelAIConnector = {
             // 构建请求体（完全复制 sd-helper-novelai-add-1.js 的格式）
             const requestBody = {
                 action: 'generate',
-                input: String(finalPrompt || ''),
+                input: String(baseCaption || ''),
                 model: modelName,
                 parameters: {
                     params_version: 3,
@@ -188,8 +211,8 @@ const NovelAIConnector = {
                     characterPrompts: [],
                     v4_prompt: {
                         caption: {
-                            base_caption: String(finalPrompt || ''),
-                            char_captions: []
+                            base_caption: String(baseCaption || ''),
+                            char_captions: charCaptions
                         },
                         use_coords: false,
                         use_order: true
@@ -289,6 +312,7 @@ const NovelAIConnector = {
                 sm_dyn: false,
                 decrisper: false,
                 variety_boost: false,
+                v4MultiChar: true,
                 cfg_rescale: 0,
                 ucPreset: 0
             },
@@ -419,6 +443,10 @@ const NovelAIConnector = {
                                 <input type="checkbox" id="sd-novelai-variety-boost" ${p.variety_boost ? 'checked' : ''}>
                                 <span style="font-size:0.85em;">Variety+</span>
                             </label>
+                            <label title="开启后，允许使用 <char>特征...</char> 语法将多名角色分开描绘，防止特征污染" style="display:flex; align-items:center; gap:4px; cursor:pointer;">
+                                <input type="checkbox" id="sd-novelai-v4-multi" ${p.v4MultiChar !== false ? 'checked' : ''}>
+                                <span style="font-size:0.85em;">多角色标签 <span style="color:#aaa; font-size:0.9em; margin-left:2px;">(V4+)</span></span>
+                            </label>
                         </div>
                     </div>
                 </div>
@@ -470,6 +498,7 @@ const NovelAIConnector = {
                 sm_dyn: $('#sd-novelai-sm-dyn').is(':checked'),
                 decrisper: $('#sd-novelai-decrisper').is(':checked'),
                 variety_boost: $('#sd-novelai-variety-boost').is(':checked'),
+                v4MultiChar: $('#sd-novelai-v4-multi').is(':checked'),
                 cfg_rescale: 0,
                 ucPreset: 0
             },
