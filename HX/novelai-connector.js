@@ -2,12 +2,12 @@
  * SD Helper - NovelAI 连接器
  * 直接调用 NovelAI API（直连模式）
  * 
- * v4.4 - 仪表盘式紧凑现代布局（Dashboard Layout）：
- * 1. 顶部两栏仪表盘：左侧「授权与模型」+ 右侧「生图基础参数」并排呈现
- * 2. 进阶开关重构为 3 列现代卡片网格，短标签 + 详细原理悬停气泡提示 (title)
- * 3. 底部测试生图与状态卡片自适应居中展现
- * 4. 减少 40% 纵向滚动，宽屏与移动端完美自适应响应
- * 5. 全量 CSS 变量与设计规范无缝对接
+ * v4.5 - 酒馆助手原生规范对齐版：
+ * 1. 严格参考「酒馆助手脚本」的官方 UI 规范与样式结构
+ * 2. 全面采用原生 .sd-card、.sd-api-row、.sd-setting-row 与 .text_pole
+ * 3. 进阶设置对齐酒馆助手的开关行结构（左侧标题+说明，右侧 .sd-toggle 切换开关）
+ * 4. 彻底消除布局错乱与 CSS 冲突，完美适配桌面与移动端
+ * 5. 全量使用酒馆助手原生 CSS 变量 (--nm-accent, --nm-border 等)
  */
 
 const NovelAIConnector = {
@@ -72,201 +72,6 @@ const NovelAIConnector = {
         { w: 1024, h: 1792, label: '1024x1792 (4:7)' },
         { w: 1792, h: 1024, label: '1792x1024 (7:4)' }
     ],
-
-    /**
-     * 确保连接器样式已单例注入 head
-     */
-    ensureStyles() {
-        if (typeof document === 'undefined') return;
-        const STYLE_ID = 'sd-novelai-connector-style';
-        if (document.getElementById(STYLE_ID)) return;
-
-        const style = document.createElement('style');
-        style.id = STYLE_ID;
-        style.textContent = `
-            .sd-connector-config[data-connector="novelai"] {
-                display: flex;
-                flex-direction: column;
-                gap: 14px;
-                font-family: var(--font-stack, sans-serif);
-                width: 100%;
-                box-sizing: border-box;
-            }
-            /* 顶部两栏仪表盘布局 */
-            .sd-connector-config[data-connector="novelai"] .sd-dashboard-row {
-                display: grid;
-                grid-template-columns: 1fr 1fr;
-                gap: 14px;
-                width: 100%;
-            }
-            .sd-connector-config[data-connector="novelai"] .sd-card {
-                background: rgba(255, 255, 255, 0.03);
-                border: 1px solid var(--nm-border, rgba(255, 255, 255, 0.1));
-                border-radius: var(--nm-radius, 12px);
-                padding: 16px;
-                transition: background 0.2s ease, border-color 0.2s ease;
-                margin-bottom: 0;
-                display: flex;
-                flex-direction: column;
-                gap: 12px;
-                box-sizing: border-box;
-            }
-            .sd-connector-config[data-connector="novelai"] .sd-card:hover {
-                background: rgba(255, 255, 255, 0.045);
-                border-color: rgba(255, 255, 255, 0.16);
-            }
-            .sd-connector-config[data-connector="novelai"] .sd-card-header {
-                font-weight: 600;
-                font-size: 0.95rem;
-                color: var(--nm-text, #ffffff);
-                display: flex;
-                align-items: center;
-                gap: 8px;
-                padding-bottom: 4px;
-                border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-            }
-            .sd-connector-config[data-connector="novelai"] .sd-form-group {
-                display: flex;
-                flex-direction: column;
-                gap: 5px;
-                width: 100%;
-            }
-            .sd-connector-config[data-connector="novelai"] .sd-form-label {
-                font-size: 0.85rem;
-                font-weight: 500;
-                color: var(--nm-text, #ffffff);
-                display: flex;
-                align-items: center;
-                gap: 6px;
-            }
-            .sd-connector-config[data-connector="novelai"] .sd-form-hint {
-                font-size: 0.78rem;
-                color: var(--nm-text-muted, #a0a0a0);
-                line-height: 1.35;
-            }
-            .sd-connector-config[data-connector="novelai"] .sd-full-input {
-                width: 100% !important;
-                box-sizing: border-box !important;
-            }
-            .sd-connector-config[data-connector="novelai"] .sd-param-grid-2 {
-                display: grid;
-                grid-template-columns: 1fr 1fr;
-                gap: 10px;
-                width: 100%;
-            }
-            .sd-connector-config[data-connector="novelai"] .sd-param-grid-3 {
-                display: grid;
-                grid-template-columns: 1fr 1fr 1fr;
-                gap: 8px;
-                width: 100%;
-            }
-            /* 3 列紧凑卡片网格 */
-            .sd-connector-config[data-connector="novelai"] .sd-adv-grid-3 {
-                display: grid;
-                grid-template-columns: repeat(3, 1fr);
-                gap: 10px;
-                width: 100%;
-            }
-            .sd-connector-config[data-connector="novelai"] .sd-adv-switch-card {
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                padding: 9px 12px;
-                background: rgba(0, 0, 0, 0.18);
-                border: 1px solid var(--nm-border, rgba(255, 255, 255, 0.1));
-                border-radius: var(--nm-radius-sm, 6px);
-                transition: all 0.15s ease;
-                user-select: none;
-                box-sizing: border-box;
-                cursor: pointer;
-            }
-            .sd-connector-config[data-connector="novelai"] .sd-adv-switch-card:hover {
-                background: rgba(255, 255, 255, 0.06);
-                border-color: var(--nm-accent-glow, rgba(96, 205, 255, 0.3));
-            }
-            .sd-connector-config[data-connector="novelai"] .sd-adv-switch-label {
-                display: flex;
-                flex-direction: column;
-                gap: 2px;
-                font-size: 0.85rem;
-                font-weight: 500;
-                color: var(--nm-text, #ffffff);
-                padding-right: 6px;
-                overflow: hidden;
-            }
-            .sd-connector-config[data-connector="novelai"] .sd-adv-switch-label .tag-badge {
-                font-size: 0.72rem;
-                color: var(--nm-accent, #60CDFF);
-                font-weight: 400;
-            }
-            .sd-connector-config[data-connector="novelai"] .sd-adv-switch-card .sd-toggle {
-                flex-shrink: 0;
-            }
-            /* 测试区域 */
-            .sd-connector-config[data-connector="novelai"] .sd-test-result-box {
-                text-align: center;
-                min-height: 120px;
-                background: rgba(0, 0, 0, 0.2);
-                border: 1px dashed var(--nm-border, rgba(255, 255, 255, 0.15));
-                border-radius: var(--nm-radius-sm, 6px);
-                padding: 16px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                flex-direction: column;
-                gap: 8px;
-                transition: all 0.2s ease;
-                box-sizing: border-box;
-                width: 100%;
-            }
-            .sd-connector-config[data-connector="novelai"] .sd-test-result-box img {
-                max-width: 100%;
-                max-height: 320px;
-                object-fit: contain;
-                border-radius: var(--nm-radius-sm, 6px);
-                box-shadow: 0 4px 16px var(--nm-shadow-dark, rgba(0, 0, 0, 0.4));
-                border: 1px solid var(--nm-border, rgba(255, 255, 255, 0.1));
-                animation: sd-fade 0.3s ease;
-            }
-            .sd-connector-config[data-connector="novelai"] .sd-skeleton-loader {
-                width: 100%;
-                min-height: 140px;
-                border-radius: var(--nm-radius-sm, 6px);
-                background: linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.03) 75%);
-                background-size: 200% 100%;
-                animation: sd-skeleton-loading 1.5s infinite linear;
-                border: 1px solid rgba(255,255,255,0.05);
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                color: var(--nm-accent, #60CDFF);
-                font-size: 0.9em;
-                gap: 8px;
-                box-sizing: border-box;
-            }
-            @media (max-width: 820px) {
-                .sd-connector-config[data-connector="novelai"] .sd-dashboard-row {
-                    grid-template-columns: 1fr;
-                }
-                .sd-connector-config[data-connector="novelai"] .sd-adv-grid-3 {
-                    grid-template-columns: repeat(2, 1fr);
-                }
-            }
-            @media (max-width: 560px) {
-                .sd-connector-config[data-connector="novelai"] .sd-adv-grid-3 {
-                    grid-template-columns: 1fr;
-                }
-                .sd-connector-config[data-connector="novelai"] .sd-param-grid-2,
-                .sd-connector-config[data-connector="novelai"] .sd-param-grid-3 {
-                    grid-template-columns: 1fr;
-                }
-                .sd-connector-config[data-connector="novelai"] .sd-test-result-box img {
-                    max-height: 220px;
-                }
-            }
-        `;
-        document.head.appendChild(style);
-    },
 
     // ============ 核心方法 ============
 
@@ -526,8 +331,6 @@ const NovelAIConnector = {
     },
 
     renderConfigUI(config) {
-        this.ensureStyles();
-
         const c = { ...this.getDefaultConfig(), ...config };
         const p = c.defaultParams || {};
 
@@ -549,159 +352,153 @@ const NovelAIConnector = {
 
         return `
             <div class="sd-connector-config" data-connector="novelai">
-                <!-- 顶部仪表盘两栏：左侧授权/模型 + 右侧核心参数 -->
-                <div class="sd-dashboard-row">
-                    <!-- 左列：API 授权与模型 -->
-                    <div class="sd-card">
-                        <div class="sd-card-header">
-                            <span>🔑</span>
-                            <span>API 授权与模型</span>
-                        </div>
+                <!-- 1. API 授权与模型设置卡片 -->
+                <div class="sd-card">
+                    <h4 style="margin-top:0; margin-bottom:15px; font-weight:600; color:var(--nm-text);">🔑 授权与模型配置</h4>
+                    
+                    <div class="sd-api-row">
+                        <label>API Token</label>
+                        <input type="password" id="sd-novelai-token" class="text_pole" 
+                               placeholder="pst-xxxxxxxx (从 NovelAI 账户设置获取)" value="${c.apiToken || ''}">
+                    </div>
+                    <small style="color: var(--nm-text-muted); display: block; margin-left: 112px; margin-top: -6px; margin-bottom: 12px; font-size: 0.82em;">
+                        请填入以 <code>pst-</code> 开头的持久访问令牌
+                    </small>
 
-                        <div class="sd-form-group">
-                            <label class="sd-form-label">API Token</label>
-                            <input type="password" id="sd-novelai-token" class="text_pole sd-full-input" 
-                                   placeholder="pst-xxxxxxxx (NovelAI 设置获取)" value="${c.apiToken || ''}">
-                            <small class="sd-form-hint">以 <code>pst-</code> 开头的持久访问令牌</small>
-                        </div>
-
-                        <div class="sd-form-group">
-                            <label class="sd-form-label">生图模型 (Model)</label>
-                            <select id="sd-novelai-model" class="text_pole sd-full-input">${modelOptions}</select>
-                        </div>
-
-                        <button id="sd-novelai-test" class="sd-btn-secondary" style="width:100%; margin-top:2px;">🧪 测试连接有效性</button>
+                    <div class="sd-api-row">
+                        <label>模型版本</label>
+                        <select id="sd-novelai-model" class="text_pole">${modelOptions}</select>
                     </div>
 
-                    <!-- 右列：生图基础参数 -->
-                    <div class="sd-card">
-                        <div class="sd-card-header">
-                            <span>⚙️</span>
-                            <span>生图基础参数</span>
-                        </div>
+                    <button id="sd-novelai-test" class="sd-btn-secondary" style="width:100%; margin-top:10px;">🧪 测试API连接</button>
+                </div>
 
-                        <div class="sd-form-group">
-                            <label class="sd-form-label">默认分辨率 (Resolution)</label>
-                            <select id="sd-novelai-resolution" class="text_pole sd-full-input">${resolutionOptions}</select>
-                        </div>
+                <!-- 2. 生图基础参数卡片 -->
+                <div class="sd-card">
+                    <h4 style="margin-top:0; margin-bottom:15px; font-weight:600; color:var(--nm-text);">⚙️ 生图基础参数</h4>
 
-                        <div class="sd-param-grid-2">
-                            <div class="sd-form-group">
-                                <label class="sd-form-label">采样算法 (Sampler)</label>
-                                <select id="sd-novelai-sampler" class="text_pole sd-full-input">${samplerOptions}</select>
-                            </div>
-                            <div class="sd-form-group">
-                                <label class="sd-form-label">调度器 (Scheduler)</label>
-                                <select id="sd-novelai-scheduler" class="text_pole sd-full-input">${schedulerOptions}</select>
-                            </div>
-                        </div>
+                    <div class="sd-api-row">
+                        <label>默认分辨率</label>
+                        <select id="sd-novelai-resolution" class="text_pole">${resolutionOptions}</select>
+                    </div>
 
-                        <div class="sd-param-grid-3">
-                            <div class="sd-form-group">
-                                <label class="sd-form-label">CFG Scale</label>
-                                <input type="number" id="sd-novelai-cfg" class="text_pole sd-full-input" 
-                                       value="${p.cfg || 6}" min="1" max="20" step="0.5">
-                            </div>
-                            <div class="sd-form-group">
-                                <label class="sd-form-label">采样步数</label>
-                                <input type="number" id="sd-novelai-steps" class="text_pole sd-full-input" 
-                                       value="${p.steps || 28}" min="1" max="50">
-                            </div>
-                            <div class="sd-form-group">
-                                <label class="sd-form-label">种子 (-1随机)</label>
-                                <input type="number" id="sd-novelai-seed" class="text_pole sd-full-input" 
-                                       value="${p.seed !== undefined ? p.seed : -1}">
-                            </div>
-                        </div>
+                    <div class="sd-api-row">
+                        <label>采样算法</label>
+                        <select id="sd-novelai-sampler" class="text_pole">${samplerOptions}</select>
+                    </div>
+
+                    <div class="sd-api-row">
+                        <label>调度器</label>
+                        <select id="sd-novelai-scheduler" class="text_pole">${schedulerOptions}</select>
+                    </div>
+
+                    <div class="sd-api-row">
+                        <label>CFG Scale</label>
+                        <input type="number" id="sd-novelai-cfg" class="text_pole" 
+                               value="${p.cfg || 6}" min="1" max="20" step="0.5">
+                    </div>
+
+                    <div class="sd-api-row">
+                        <label>采样步数</label>
+                        <input type="number" id="sd-novelai-steps" class="text_pole" 
+                               value="${p.steps || 28}" min="1" max="50">
+                    </div>
+
+                    <div class="sd-api-row">
+                        <label>随机种子</label>
+                        <input type="number" id="sd-novelai-seed" class="text_pole" 
+                               value="${p.seed !== undefined ? p.seed : -1}" placeholder="-1为随机">
                     </div>
                 </div>
 
-                <!-- 中间：进阶功能与采样开关 (3 列紧凑卡片网格) -->
+                <!-- 3. 进阶功能与采样开关卡片 (标准 .sd-setting-row) -->
                 <div class="sd-card">
-                    <div class="sd-card-header">
-                        <span>🚀</span>
-                        <span>进阶特性与算法优化</span>
-                    </div>
+                    <h4 style="margin-top:0; margin-bottom:15px; font-weight:600; color:var(--nm-text);">🚀 进阶功能与采样优化</h4>
 
-                    <div class="sd-adv-grid-3">
-                        <!-- 1. Quality+ -->
-                        <div class="sd-adv-switch-card" title="自动追加官方优化的画质提示词，显著提升线条与光影质感（建议开启）">
-                            <div class="sd-adv-switch-label">
-                                <span>Quality+</span>
-                                <span class="tag-badge">画质增强</span>
-                            </div>
+                    <div class="sd-setting-row">
+                        <div class="sd-setting-label">
+                            <span style="font-weight:600;">Quality+ (画质增强)</span>
+                            <small style="color:var(--nm-text-muted); display:block; margin-top:2px;">自动追加官方画质提示词，显著提升线条与光影质感（建议开启）</small>
+                        </div>
+                        <div class="sd-setting-control">
                             <label class="sd-toggle">
                                 <input type="checkbox" id="sd-novelai-quality-toggle" ${p.qualityToggle ? 'checked' : ''}>
                                 <span class="sd-slider"></span>
                             </label>
                         </div>
+                    </div>
 
-                        <!-- 2. Auto SMEA -->
-                        <div class="sd-adv-switch-card" title="在高分辨率或长宽比较大时自动启用 SMEA 算法，防止大图肢体崩坏">
-                            <div class="sd-adv-switch-label">
-                                <span>Auto SMEA</span>
-                                <span class="tag-badge">大图自适应</span>
-                            </div>
+                    <div class="sd-setting-row">
+                        <div class="sd-setting-label">
+                            <span style="font-weight:600;">Auto SMEA (大图自适应)</span>
+                            <small style="color:var(--nm-text-muted); display:block; margin-top:2px;">在大图或高分辨率时自动启用 SMEA 算法，防止大图肢体崩坏</small>
+                        </div>
+                        <div class="sd-setting-control">
                             <label class="sd-toggle">
                                 <input type="checkbox" id="sd-novelai-auto-smea" ${p.autoSmea ? 'checked' : ''}>
                                 <span class="sd-slider"></span>
                             </label>
                         </div>
+                    </div>
 
-                        <!-- 3. Decrisper -->
-                        <div class="sd-adv-switch-card" title="在高 CFG 值下动态平滑色彩噪点，有效防止画面过饱和与黑斑产生">
-                            <div class="sd-adv-switch-label">
-                                <span>Decrisper</span>
-                                <span class="tag-badge">过锐化降噪</span>
-                            </div>
+                    <div class="sd-setting-row">
+                        <div class="sd-setting-label">
+                            <span style="font-weight:600;">Decrisper (过锐化降噪)</span>
+                            <small style="color:var(--nm-text-muted); display:block; margin-top:2px;">在高 CFG 值下平滑色彩噪点，有效防止画面过饱和与黑斑产生</small>
+                        </div>
+                        <div class="sd-setting-control">
                             <label class="sd-toggle">
                                 <input type="checkbox" id="sd-novelai-decrisper" ${p.decrisper ? 'checked' : ''}>
                                 <span class="sd-slider"></span>
                             </label>
                         </div>
+                    </div>
 
-                        <!-- 4. Variety+ -->
-                        <div class="sd-adv-switch-card" title="在采样高 Sigma 阶段跳过 CFG 引导，极大提升角色姿态与构图丰富度">
-                            <div class="sd-adv-switch-label">
-                                <span>Variety+</span>
-                                <span class="tag-badge">构图多样性</span>
-                            </div>
+                    <div class="sd-setting-row">
+                        <div class="sd-setting-label">
+                            <span style="font-weight:600;">Variety+ (构图多样性)</span>
+                            <small style="color:var(--nm-text-muted); display:block; margin-top:2px;">在采样高 Sigma 阶段跳过 CFG 引导，极大提升角色姿态与构图多样性</small>
+                        </div>
+                        <div class="sd-setting-control">
                             <label class="sd-toggle">
                                 <input type="checkbox" id="sd-novelai-variety-boost" ${p.variety_boost ? 'checked' : ''}>
                                 <span class="sd-slider"></span>
                             </label>
                         </div>
+                    </div>
 
-                        <!-- 5. 多角色分层 -->
-                        <div class="sd-adv-switch-card" title="允许使用 <char>特征...</char> 语法独立描绘多名角色，彻底防止特征相互污染">
-                            <div class="sd-adv-switch-label">
-                                <span>多角色分层</span>
-                                <span class="tag-badge">V4 / V4.5 专享</span>
-                            </div>
+                    <div class="sd-setting-row">
+                        <div class="sd-setting-label">
+                            <span style="font-weight:600;">多角色分层解析 (V4+)</span>
+                            <small style="color:var(--nm-text-muted); display:block; margin-top:2px;">允许使用 <code>&lt;char&gt;特征...&lt;/char&gt;</code> 独立描绘多名角色，彻底防止特征相互污染</small>
+                        </div>
+                        <div class="sd-setting-control">
                             <label class="sd-toggle">
                                 <input type="checkbox" id="sd-novelai-v4-multi" ${p.v4MultiChar !== false ? 'checked' : ''}>
                                 <span class="sd-slider"></span>
                             </label>
                         </div>
+                    </div>
 
-                        <!-- 6. SMEA (V3) -->
-                        <div class="sd-adv-switch-card" title="Sinusoidal Multipass Euler Ancestral 多遍采样优化算法（仅适用于 V3 模型）">
-                            <div class="sd-adv-switch-label">
-                                <span>SMEA</span>
-                                <span class="tag-badge">仅适用于 V3</span>
-                            </div>
+                    <div class="sd-setting-row">
+                        <div class="sd-setting-label">
+                            <span style="font-weight:600;">SMEA 采样优化 (仅V3)</span>
+                            <small style="color:var(--nm-text-muted); display:block; margin-top:2px;">Sinusoidal Multipass Euler Ancestral 采样算法（仅适用于 V3 模型）</small>
+                        </div>
+                        <div class="sd-setting-control">
                             <label class="sd-toggle">
                                 <input type="checkbox" id="sd-novelai-sm" ${p.sm ? 'checked' : ''}>
                                 <span class="sd-slider"></span>
                             </label>
                         </div>
+                    </div>
 
-                        <!-- 7. SMEA DYN (V3) -->
-                        <div class="sd-adv-switch-card" title="动态调整的 SMEA 采样算法，适合高分辨率和复杂构图（仅适用于 V3 模型）">
-                            <div class="sd-adv-switch-label">
-                                <span>SMEA DYN</span>
-                                <span class="tag-badge">仅适用于 V3</span>
-                            </div>
+                    <div class="sd-setting-row" style="border-bottom:none;">
+                        <div class="sd-setting-label">
+                            <span style="font-weight:600;">SMEA DYN 动态采样 (仅V3)</span>
+                            <small style="color:var(--nm-text-muted); display:block; margin-top:2px;">动态调整的 SMEA 采样算法，适合高分辨率构图（仅适用于 V3 模型）</small>
+                        </div>
+                        <div class="sd-setting-control">
                             <label class="sd-toggle">
                                 <input type="checkbox" id="sd-novelai-sm-dyn" ${p.sm_dyn ? 'checked' : ''}>
                                 <span class="sd-slider"></span>
@@ -710,28 +507,24 @@ const NovelAIConnector = {
                     </div>
                 </div>
 
-                <!-- 底部：实时测试生图与预览 -->
+                <!-- 4. 测试生图卡片 -->
                 <div class="sd-card">
-                    <div class="sd-card-header">
-                        <span>🖼️</span>
-                        <span>测试生图与效果预览</span>
-                    </div>
-
-                    <div style="display:flex; gap:8px;">
-                        <input type="text" id="sd-novelai-test-prompt" class="text_pole sd-full-input" 
+                    <h4 style="margin-top:0; margin-bottom:15px; font-weight:600; color:var(--nm-text);">🖼️ 测试生图</h4>
+                    
+                    <div style="display:flex; gap:8px; margin-bottom:12px;">
+                        <input type="text" id="sd-novelai-test-prompt" class="text_pole" 
                                placeholder="输入测试提示词，如: 1girl, masterpiece, best quality" 
                                style="flex:1;" value="${c.testPrompt || '1girl, masterpiece, best quality'}">
-                        <button id="sd-novelai-test-gen" class="sd-btn-primary" style="white-space:nowrap; padding:8px 18px;">🎨 生成测试</button>
+                        <button id="sd-novelai-test-gen" class="sd-btn-primary" style="white-space:nowrap; padding:8px 16px;">🎨 生成测试</button>
                     </div>
 
-                    <div id="sd-novelai-test-result" class="sd-test-result-box">
-                        <span style="font-size: 1.6em; opacity: 0.7;">✨</span>
-                        <span style="color: var(--nm-text-muted); font-size: 0.88em;">点击上方“生成测试”按钮预览当前参数效果</span>
+                    <div id="sd-novelai-test-result" style="text-align:center; min-height:100px; background:rgba(0,0,0,0.2); border-radius:var(--nm-radius-sm); padding:16px; display:flex; align-items:center; justify-content:center; border:1px dashed var(--nm-border);">
+                        <span style="color:var(--nm-text-muted); font-size:0.9em;">点击上方“生成测试”按钮测试连接与效果</span>
                     </div>
                 </div>
 
-                <!-- 提示卡片 -->
-                <div class="sd-card" style="border-left: 3px solid var(--nm-accent); background: rgba(96, 205, 255, 0.05); padding: 12px 16px;">
+                <!-- 5. 资费提示卡片 -->
+                <div class="sd-card" style="border-left: 3px solid var(--nm-accent); background: rgba(96, 205, 255, 0.05); padding: 12px 16px; margin-bottom: 0;">
                     <div style="display:flex; align-items:center; gap:8px; color:var(--nm-accent); font-size:0.88em; font-weight:500;">
                         <span>💡</span>
                         <span>NovelAI 为第三方付费生图服务，测试及对话生图均会消耗账户 Anlas 点数。</span>
@@ -789,11 +582,11 @@ const NovelAIConnector = {
             } catch (e) {
                 if (toastr) toastr.error(`测试异常: ${e.message}`, 'NovelAI');
             } finally {
-                btn.prop('disabled', false).text('🧪 测试连接有效性');
+                btn.prop('disabled', false).text('🧪 测试API连接');
             }
         });
 
-        // 测试生图按钮（带状态与骨架屏反馈）
+        // 测试生图按钮
         $('#sd-novelai-test-gen').off('click.nai').on('click.nai', async function () {
             const btn = $(this);
             const $result = $('#sd-novelai-test-result');
@@ -801,7 +594,7 @@ const NovelAIConnector = {
 
             btn.prop('disabled', true).text('⏳ 生成中...');
             $result.html(`
-                <div class="sd-skeleton-loader">
+                <div class="sd-skeleton-img" style="min-height:120px; display:flex; align-items:center; justify-content:center; color:var(--nm-accent); font-size:0.9em; gap:8px;">
                     <span style="font-size: 1.2em;">⏳</span>
                     <span>正在连接 NovelAI 生成测试图片...</span>
                 </div>
@@ -823,7 +616,7 @@ const NovelAIConnector = {
                 if (genResult.success && genResult.base64) {
                     $result.html(`
                         <div style="display:flex; flex-direction:column; align-items:center; gap:8px;">
-                            <img src="data:image/${genResult.format || 'png'};base64,${genResult.base64}" alt="Test Result" />
+                            <img src="data:image/${genResult.format || 'png'};base64,${genResult.base64}" style="max-width:100%; max-height:300px; border-radius:var(--nm-radius-sm); box-shadow: 0 4px 16px var(--nm-shadow-dark);" alt="Test Result" />
                             <small style="color:var(--nm-text-muted); font-size:0.8em;">✅ 生成成功 (${config.model || 'NovelAI'})</small>
                         </div>
                     `);
