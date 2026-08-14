@@ -373,41 +373,43 @@ const NovelAIConnector = {
                     <button id="sd-novelai-test" class="sd-btn-secondary" style="width:100%; margin-top:10px;">🧪 测试API连接</button>
                 </div>
 
-                <!-- 2. 生图基础参数卡片 -->
+                <!-- 2. 生图基础参数卡片 (精简两排布局) -->
                 <div class="sd-card">
                     <h4 style="margin-top:0; margin-bottom:15px; font-weight:600; color:var(--nm-text);">⚙️ 生图基础参数</h4>
 
-                    <div class="sd-api-row">
-                        <label>默认分辨率</label>
-                        <select id="sd-novelai-resolution" class="text_pole">${resolutionOptions}</select>
+                    <!-- 第 1 排：分辨率、采样算法、调度器 -->
+                    <div style="display: grid; grid-template-columns: 1.2fr 1fr 1fr; gap: 10px; margin-bottom: 12px;">
+                        <div>
+                            <label style="display: block; font-size: 0.85em; color: var(--nm-text-muted); margin-bottom: 4px; font-weight: 500;">默认分辨率</label>
+                            <select id="sd-novelai-resolution" class="text_pole" style="width: 100%; box-sizing: border-box;">${resolutionOptions}</select>
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 0.85em; color: var(--nm-text-muted); margin-bottom: 4px; font-weight: 500;">采样算法</label>
+                            <select id="sd-novelai-sampler" class="text_pole" style="width: 100%; box-sizing: border-box;">${samplerOptions}</select>
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 0.85em; color: var(--nm-text-muted); margin-bottom: 4px; font-weight: 500;">调度器</label>
+                            <select id="sd-novelai-scheduler" class="text_pole" style="width: 100%; box-sizing: border-box;">${schedulerOptions}</select>
+                        </div>
                     </div>
 
-                    <div class="sd-api-row">
-                        <label>采样算法</label>
-                        <select id="sd-novelai-sampler" class="text_pole">${samplerOptions}</select>
-                    </div>
-
-                    <div class="sd-api-row">
-                        <label>调度器</label>
-                        <select id="sd-novelai-scheduler" class="text_pole">${schedulerOptions}</select>
-                    </div>
-
-                    <div class="sd-api-row">
-                        <label>CFG Scale</label>
-                        <input type="number" id="sd-novelai-cfg" class="text_pole" 
-                               value="${p.cfg || 6}" min="1" max="20" step="0.5">
-                    </div>
-
-                    <div class="sd-api-row">
-                        <label>采样步数</label>
-                        <input type="number" id="sd-novelai-steps" class="text_pole" 
-                               value="${p.steps || 28}" min="1" max="50">
-                    </div>
-
-                    <div class="sd-api-row">
-                        <label>随机种子</label>
-                        <input type="number" id="sd-novelai-seed" class="text_pole" 
-                               value="${p.seed !== undefined ? p.seed : -1}" placeholder="-1为随机">
+                    <!-- 第 2 排：CFG Scale、采样步数、随机种子 -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+                        <div>
+                            <label style="display: block; font-size: 0.85em; color: var(--nm-text-muted); margin-bottom: 4px; font-weight: 500;">CFG Scale</label>
+                            <input type="number" id="sd-novelai-cfg" class="text_pole" 
+                                   value="${p.cfg || 6}" min="1" max="20" step="0.5" style="width: 100%; box-sizing: border-box;">
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 0.85em; color: var(--nm-text-muted); margin-bottom: 4px; font-weight: 500;">采样步数</label>
+                            <input type="number" id="sd-novelai-steps" class="text_pole" 
+                                   value="${p.steps || 28}" min="1" max="50" style="width: 100%; box-sizing: border-box;">
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 0.85em; color: var(--nm-text-muted); margin-bottom: 4px; font-weight: 500;">随机种子 (-1随机)</label>
+                            <input type="number" id="sd-novelai-seed" class="text_pole" 
+                                   value="${p.seed !== undefined ? p.seed : -1}" placeholder="-1为随机" style="width: 100%; box-sizing: border-box;">
+                        </div>
                     </div>
                 </div>
 
