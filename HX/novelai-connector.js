@@ -2,12 +2,12 @@
  * SD Helper - NovelAI 连接器
  * 直接调用 NovelAI API（直连模式）
  * 
- * v4.5 - 酒馆助手原生规范对齐版：
- * 1. 严格参考「酒馆助手脚本」的官方 UI 规范与样式结构
- * 2. 全面采用原生 .sd-card、.sd-api-row、.sd-setting-row 与 .text_pole
- * 3. 进阶设置对齐酒馆助手的开关行结构（左侧标题+说明，右侧 .sd-toggle 切换开关）
- * 4. 彻底消除布局错乱与 CSS 冲突，完美适配桌面与移动端
- * 5. 全量使用酒馆助手原生 CSS 变量 (--nm-accent, --nm-border 等)
+ * v5.0 - NovelAI Diffusion V5 升级适配版：
+ * 1. 新增支持官方最新发布的 NovelAI Diffusion V5 模型（V5 Full & V5 Curated）
+ * 2. 默认模型升级为 nai-diffusion-5-full
+ * 3. 支持 V5 全新特性（如透明背景生成、Qwen-based Tokenizer 提示词分层、最高32角色扩展等）
+ * 4. 完善采样器列表（新增 DPM++ 2M SDE、DPM++ 2S a 等）
+ * 5. 保持严格符合「酒馆助手脚本」官方 UI 规范与样式结构（.sd-card / .sd-setting-row / .text_pole 等）
  */
 
 const NovelAIConnector = {
@@ -18,7 +18,9 @@ const NovelAIConnector = {
 
     // 可用模型
     MODELS: [
-        { id: 'nai-diffusion-4-5-full', name: 'NAI Diffusion V4.5 Full (最新)' },
+        { id: 'nai-diffusion-5-full', name: 'NAI Diffusion V5 Full (最新)' },
+        { id: 'nai-diffusion-5-curated', name: 'NAI Diffusion V5 Curated' },
+        { id: 'nai-diffusion-4-5-full', name: 'NAI Diffusion V4.5 Full' },
         { id: 'nai-diffusion-4-5-curated', name: 'NAI Diffusion V4.5 Curated' },
         { id: 'nai-diffusion-4-curated-preview', name: 'NAI Diffusion V4 Curated' },
         { id: 'nai-diffusion-4-full', name: 'NAI Diffusion V4 Full' },
@@ -34,7 +36,9 @@ const NovelAIConnector = {
         { id: 'k_euler_ancestral', name: 'Euler a' },
         { id: 'k_dpmpp_2m', name: 'DPM++ 2M' },
         { id: 'k_dpmpp_2m_ancestral', name: 'DPM++ 2M a' },
+        { id: 'k_dpmpp_2m_sde', name: 'DPM++ 2M SDE' },
         { id: 'k_dpmpp_sde', name: 'DPM++ SDE' },
+        { id: 'k_dpmpp_2s_ancestral', name: 'DPM++ 2S a' },
         { id: 'ddim', name: 'DDIM' }
     ],
 
@@ -133,7 +137,7 @@ const NovelAIConnector = {
                 ? `${c.promptPrefix.trim()}, ${prompt}`.replace(/,\s*,/g, ',').trim()
                 : prompt;
 
-            // 多角色分层解析 (V4/V4.5 Multi-Character Prompting)
+            // 多角色分层解析 (V4/V4.5/V5 Multi-Character Prompting)
             let baseCaption = finalPrompt;
             const charCaptions = [];
             
@@ -165,13 +169,14 @@ const NovelAIConnector = {
             const inputSeed = params.seed !== undefined ? params.seed : (p.seed !== undefined ? p.seed : -1);
             const seed = (inputSeed >= 0) ? inputSeed : Math.floor(Math.random() * 4294967295);
 
-            const modelName = c.model || 'nai-diffusion-4-5-full';
+            const modelName = c.model || 'nai-diffusion-5-full';
+            const isV5 = modelName.includes('nai-diffusion-5');
             const isV45 = modelName.includes('nai-diffusion-4-5');
 
             // 计算 variety_boost 的 skip_cfg_above_sigma
             let skipCfgAboveSigma = null;
             if (p.variety_boost) {
-                const magicConstant = isV45 ? 58 : 19;
+                const magicConstant = isV5 ? 58 : (isV45 ? 58 : 19);
                 const pixelCount = width * height;
                 const ratio = pixelCount / 1011712;
                 skipCfgAboveSigma = Math.pow(ratio, 0.5) * magicConstant;
@@ -212,6 +217,8 @@ const NovelAIConnector = {
                     sm: p.sm !== undefined ? p.sm : false,
                     sm_dyn: p.sm_dyn !== undefined ? p.sm_dyn : false,
                     characterPrompts: [],
+                    tag_hint_transparent_background: p.transparent !== undefined ? p.transparent : false,
+                    transparent: p.transparent !== undefined ? p.transparent : false,
                     v4_prompt: {
                         caption: {
                             base_caption: String(baseCaption || ''),
@@ -298,7 +305,7 @@ const NovelAIConnector = {
     getDefaultConfig() {
         return {
             apiToken: '',
-            model: 'nai-diffusion-4-5-full',
+            model: 'nai-diffusion-5-full',
             promptPrefix: '',
             testPrompt: '1girl, masterpiece, best quality',
             defaultParams: {
@@ -316,6 +323,7 @@ const NovelAIConnector = {
                 decrisper: false,
                 variety_boost: false,
                 v4MultiChar: true,
+                transparent: false,
                 cfg_rescale: 0,
                 ucPreset: 0
             },
@@ -358,8 +366,13 @@ const NovelAIConnector = {
                     
                     <div class="sd-api-row">
                         <label>API Token</label>
-                        <input type="password" id="sd-novelai-token" class="text_pole" 
-                               placeholder="pst-xxxxxxxx (从 NovelAI 账户设置获取)" value="${c.apiToken || ''}">
+                        <div class="sd-password-wrapper">
+                            <input type="password" id="sd-novelai-token" class="text_pole" 
+                                   placeholder="pst-xxxxxxxx (从 NovelAI 账户设置获取)" value="${c.apiToken || ''}">
+                            <button type="button" class="sd-password-toggle-btn" data-target="#sd-novelai-token" title="显示/隐藏 API Token">
+                                <i class="fa-solid fa-eye"></i>
+                            </button>
+                        </div>
                     </div>
                     <small style="color: var(--nm-text-muted); display: block; margin-left: 112px; margin-top: -6px; margin-bottom: 12px; font-size: 0.82em;">
                         请填入以 <code>pst-</code> 开头的持久访问令牌
@@ -432,6 +445,32 @@ const NovelAIConnector = {
 
                     <div class="sd-setting-row">
                         <div class="sd-setting-label">
+                            <span style="font-weight:600;">透明背景生成 (仅V5)</span>
+                            <small style="color:var(--nm-text-muted); display:block; margin-top:2px;">直接生成透明背景角色图片，无需额外抠图（NovelAI V5 原生特性）</small>
+                        </div>
+                        <div class="sd-setting-control">
+                            <label class="sd-toggle">
+                                <input type="checkbox" id="sd-novelai-transparent" ${p.transparent ? 'checked' : ''}>
+                                <span class="sd-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="sd-setting-row">
+                        <div class="sd-setting-label">
+                            <span style="font-weight:600;">多角色分层解析 (V4/V5)</span>
+                            <small style="color:var(--nm-text-muted); display:block; margin-top:2px;">允许使用 <code>&lt;char&gt;特征...&lt;/char&gt;</code> 独立描绘多名角色（V5 支持最高 32 个角色），彻底防止特征相互污染</small>
+                        </div>
+                        <div class="sd-setting-control">
+                            <label class="sd-toggle">
+                                <input type="checkbox" id="sd-novelai-v4-multi" ${p.v4MultiChar !== false ? 'checked' : ''}>
+                                <span class="sd-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="sd-setting-row">
+                        <div class="sd-setting-label">
                             <span style="font-weight:600;">Auto SMEA (大图自适应)</span>
                             <small style="color:var(--nm-text-muted); display:block; margin-top:2px;">在大图或高分辨率时自动启用 SMEA 算法，防止大图肢体崩坏</small>
                         </div>
@@ -464,19 +503,6 @@ const NovelAIConnector = {
                         <div class="sd-setting-control">
                             <label class="sd-toggle">
                                 <input type="checkbox" id="sd-novelai-variety-boost" ${p.variety_boost ? 'checked' : ''}>
-                                <span class="sd-slider"></span>
-                            </label>
-                        </div>
-                    </div>
-
-                    <div class="sd-setting-row">
-                        <div class="sd-setting-label">
-                            <span style="font-weight:600;">多角色分层解析 (V4+)</span>
-                            <small style="color:var(--nm-text-muted); display:block; margin-top:2px;">允许使用 <code>&lt;char&gt;特征...&lt;/char&gt;</code> 独立描绘多名角色，彻底防止特征相互污染</small>
-                        </div>
-                        <div class="sd-setting-control">
-                            <label class="sd-toggle">
-                                <input type="checkbox" id="sd-novelai-v4-multi" ${p.v4MultiChar !== false ? 'checked' : ''}>
                                 <span class="sd-slider"></span>
                             </label>
                         </div>
@@ -540,7 +566,7 @@ const NovelAIConnector = {
 
         return {
             apiToken: ($('#sd-novelai-token').val() || '').trim(),
-            model: $('#sd-novelai-model').val() || 'nai-diffusion-4-5-full',
+            model: $('#sd-novelai-model').val() || 'nai-diffusion-5-full',
             testPrompt: ($('#sd-novelai-test-prompt').val() || '1girl, masterpiece, best quality').trim(),
             defaultParams: {
                 steps: parseInt($('#sd-novelai-steps').val()) || 28,
@@ -557,6 +583,7 @@ const NovelAIConnector = {
                 decrisper: $('#sd-novelai-decrisper').is(':checked'),
                 variety_boost: $('#sd-novelai-variety-boost').is(':checked'),
                 v4MultiChar: $('#sd-novelai-v4-multi').is(':checked'),
+                transparent: $('#sd-novelai-transparent').is(':checked'),
                 cfg_rescale: 0,
                 ucPreset: 0
             },
